@@ -89,7 +89,7 @@ public class SimpleData
         } else   { System.out.println(response.getVersion());}
 
 
-        influxDB.setDatabase("MyDB");
+//        influxDB.setDatabase("MyDB");
 //                    influxDB.close();
 
         /*influxDB.write(Point.measurement("cpu")
