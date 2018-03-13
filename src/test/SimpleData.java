@@ -81,7 +81,7 @@ public class SimpleData
             }
         };
 
-       InfluxDB influxDB = InfluxDBFactory.connect("http://192.168.1.101:8083/", "inter2", "19876");
+       final InfluxDB influxDB = InfluxDBFactory.connect("http://localhost:8086");
         Pong response = influxDB.ping();
         if (response.getVersion().equalsIgnoreCase("unknown")) {
             System.out.println("Error pinging server.");
@@ -89,28 +89,27 @@ public class SimpleData
         } else   { System.out.println(response.getVersion());}
 
 
-//        influxDB.setDatabase("MyDB");
+     influxDB.setDatabase("mydb");
 //                    influxDB.close();
 
-        /*influxDB.write(Point.measurement("cpu")
+        influxDB.write(Point.measurement("cpu")
                 .time(System.currentTimeMillis(), TimeUnit.MILLISECONDS)
                 //.tag("dc",23)
-                .tag("free","90")
-                .tag("hostname","localhost")
-                .tag("total","12")
-                .tag("used","323")
+                .addField("free","90")
+                .addField("hostname","localhost")
+                .addField("total","12")
+                .addField("used","323")
                                                 //.addField("JobsInSystem", jobs)
                 //.addField("CurrUnprotStorageUsed", unprotStore)
                 //.addField("PercentSystemASPUsed", aspUsed)
                 .build());
 
-        System.out.psdsdrintln("Wrote to influxDB");*/
+        System.out.println("Wrote to influxDB");
 
-        Query query = new Query("SELECT free FROM cpu", "MyDB");
-          QueryResult result = influxDB.query(query);
+        Query query = new Query("SELECT Ask FROM \"EUR.FR\"", "mydb");
+        QueryResult result = influxDB.query(query);
         System.out.println(result.getResults().toString());
-
-        query = new Query("SELECT idle FROM MyDB", "MyDB");
+        query = new Query("SELECT idle FROM MyDB", "mydb");
         influxDB.query(query);
 
         influxDB.enableBatch(2000, 100, TimeUnit.MILLISECONDS);
@@ -143,9 +142,8 @@ public class SimpleData
             System.out.println("Error creating DB Forex: "+e);}*/
 
 
-    /*BatchPoints batchPoints = BatchPoints
-                .database("MyDB")
-                .retentionPolicy("defaultPolicy")
+   BatchPoints batchPoints = BatchPoints
+                .database("mydb")
                 .build();
 
         Point point1 = Point.measurement("memory")
@@ -167,7 +165,7 @@ public class SimpleData
         batchPoints.point(point1);
         batchPoints.point(point2);
         influxDB.write(batchPoints);
-        influxDB.flush();*/
+        influxDB.flush();
 
 
         ConnectionClientAPI cc = new ConnectionClientAPI(g);
@@ -200,8 +198,15 @@ public class SimpleData
              {
                  System.out.println("arrived row update: key="+key);
                  for(String skey:data.getKeys())                 {
-                     System.out.println(skey+"="+new String(data.getCell(skey)));                     
-                 }                
+                     System.out.println(skey+"="+new String(data.getCell(skey)));
+                     String val= new String(data.getCell(skey));
+                     String key1= key.toString();
+                     influxDB.write(Point.measurement(key1)
+                             .time(System.currentTimeMillis(), TimeUnit.MILLISECONDS)
+                             .addField(skey,val)
+                             .build());
+
+                 }
              }
 
              public String getId()
@@ -224,9 +229,18 @@ public class SimpleData
    
          table.addRow("EUR.FR");
          table.addRow("JPY.FR");
-         table.addCol("Ask");
-         table.addCol("Bid");
-         table.addCol("Time");
+         table.addRow("GAZP.CFD");
+         table.addRow("USD/RUB.FRT");
+         table.addRow("RU000A0JS6N8.AG");
+        table.addRow("RU000A0JTLJ3.AG");
+
+
+
+        table.addCol("Ask");
+        table.addCol("Bid");
+        table.addCol("Last");
+        table.addCol("Close");
+        table.addCol("Time");
        
          api.assignNewTable(table);
          cc.assignSink(api.getNetworkInterface());
